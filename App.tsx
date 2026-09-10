@@ -4,8 +4,9 @@ import {getPairedMac} from './src/services/storage';
 import {PairedMac} from './src/types';
 import PairScreen from './src/screens/PairScreen';
 import DockScreen from './src/screens/DockScreen';
+import AddAppsScreen from './src/screens/AddAppsScreen';
 
-type Screen = 'loading' | 'pair' | 'dock';
+type Screen = 'loading' | 'pair' | 'dock' | 'addApps';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -43,7 +44,11 @@ export default function App() {
     );
   }
 
-  return <DockScreen mac={mac} onAddApps={() => {}} />;
+  if (screen === 'addApps') {
+    return <AddAppsScreen mac={mac} onDone={() => setScreen('dock')} />;
+  }
+
+  return <DockScreen mac={mac} onAddApps={() => setScreen('addApps')} />;
 }
 
 const styles = StyleSheet.create({
