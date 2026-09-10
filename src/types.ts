@@ -3,3 +3,7 @@ export interface MacHost {
   host: string;
   port: number;
 }
+
+export interface PairedMac extends MacHost {
+  token: string;
+}
