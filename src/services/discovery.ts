@@ -7,7 +7,7 @@ const SERVICE_PROTOCOL = 'tcp';
 
 type ResolvedListener = (host: MacHost) => void;
 
-export function startDiscovery(onFound: ResolvedListener) {
+export function startDiscovery(onFound: ResolvedListener, onError?: (e: Error) => void) {
   zeroconf.removeAllListeners();
 
   zeroconf.on('resolved', service => {
@@ -17,6 +17,10 @@ export function startDiscovery(onFound: ResolvedListener) {
       host: service.addresses[0],
       port: service.port,
     });
+  });
+
+  zeroconf.on('error', (err: Error) => {
+    onError?.(err);
   });
 
   zeroconf.scan(SERVICE_TYPE, SERVICE_PROTOCOL, 'local.');
