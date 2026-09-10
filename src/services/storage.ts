@@ -25,3 +25,18 @@ export async function getDockItems(): Promise<DockItem[]> {
 export async function saveDockItems(items: DockItem[]): Promise<void> {
   await AsyncStorage.setItem(DOCK_ITEMS_KEY, JSON.stringify(items));
 }
+
+export async function addDockItem(item: DockItem): Promise<DockItem[]> {
+  const current = await getDockItems();
+  if (current.some(i => i.path === item.path)) return current;
+  const updated = [...current, item];
+  await saveDockItems(updated);
+  return updated;
+}
+
+export async function removeDockItem(path: string): Promise<DockItem[]> {
+  const current = await getDockItems();
+  const updated = current.filter(i => i.path !== path);
+  await saveDockItems(updated);
+  return updated;
+}
