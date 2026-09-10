@@ -18,3 +18,20 @@ export async function fetchApps(mac: MacHost, token: string): Promise<RemoteApp[
   if (!res.ok) throw new Error('Failed to fetch app list');
   return res.json();
 }
+
+export function iconUrl(mac: MacHost, appPath: string): string {
+  return `${baseUrl(mac)}/icon?path=${encodeURIComponent(appPath)}`;
+}
+
+export async function launchApp(mac: MacHost, token: string, appPath: string): Promise<void> {
+  const res = await fetch(`${baseUrl(mac)}/launch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Dock-Token': token,
+    },
+    body: JSON.stringify({path: appPath}),
+  });
+  if (res.status === 401) throw new Error('Pairing code incorrect or expired');
+  if (!res.ok) throw new Error('Failed to launch app');
+}
