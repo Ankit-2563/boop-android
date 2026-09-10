@@ -1,7 +1,8 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
+  TextInput,
   FlatList,
   Image,
   TouchableOpacity,
@@ -10,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import {fetchApps, iconUrl} from '../services/api';
-import {PairedMac, RemoteApp} from '../types';
+import {addDockItem, getDockItems} from '../services/storage';
+import {DockItem, PairedMac, RemoteApp} from '../types';
 
 export default function AddAppsScreen({
   mac,
@@ -20,13 +22,16 @@ export default function AddAppsScreen({
   onDone: () => void;
 }) {
   const [apps, setApps] = useState<RemoteApp[]>([]);
+  const [addedPaths, setAddedPaths] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const appList = await fetchApps(mac, mac.token);
+        const [appList, dockItems] = await Promise.all([fetchApps(mac, mac.token), getDockItems()]);
         setApps(appList);
+        setAddedPaths(new Set(dockItems.map(i => i.path)));
       } catch (e: any) {
         Alert.alert('Could not load apps', e.message ?? 'Unknown error');
       } finally {
@@ -34,6 +39,18 @@ export default function AddAppsScreen({
       }
     })();
   }, [mac]);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return apps;
+    const q = query.toLowerCase();
+    return apps.filter(a => a.name.toLowerCase().includes(q));
+  }, [apps, query]);
+
+  const handleAdd = async (app: RemoteApp) => {
+    const item: DockItem = {...app, addedAt: Date.now()};
+    await addDockItem(item);
+    setAddedPaths(prev => new Set(prev).add(app.path));
+  };
 
   return (
     <View style={styles.container}>
@@ -43,21 +60,43 @@ export default function AddAppsScreen({
           <Text style={styles.doneLink}>Done</Text>
         </TouchableOpacity>
       </View>
+
+      <TextInput
+        style={styles.search}
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search apps..."
+        placeholderTextColor="#666"
+        autoCapitalize="none"
+      />
+
       {loading ? (
         <ActivityIndicator style={{marginTop: 40}} />
       ) : (
         <FlatList
-          data={apps}
+          data={filtered}
           keyExtractor={item => item.path}
-          renderItem={({item}) => (
-            <View style={styles.row}>
-              <Image
-                source={{uri: iconUrl(mac, item.path), headers: {'X-Dock-Token': mac.token}}}
-                style={styles.icon}
-              />
-              <Text style={styles.appName} numberOfLines={1}>{item.name}</Text>
-            </View>
-          )}
+          contentContainerStyle={{paddingBottom: 40}}
+          renderItem={({item}) => {
+            const isAdded = addedPaths.has(item.path);
+            return (
+              <View style={styles.row}>
+                <Image
+                  source={{uri: iconUrl(mac, item.path), headers: {'X-Dock-Token': mac.token}}}
+                  style={styles.icon}
+                />
+                <Text style={styles.appName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.addButton, isAdded && styles.addButtonDisabled]}
+                  disabled={isAdded}
+                  onPress={() => handleAdd(item)}>
+                  <Text style={styles.addButtonText}>{isAdded ? 'Added' : 'Add'}</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
         />
       )}
     </View>
@@ -69,7 +108,29 @@ const styles = StyleSheet.create({
   header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   title: {color: '#fff', fontSize: 24, fontWeight: '700'},
   doneLink: {color: '#d2fa00', fontSize: 16, fontWeight: '600'},
-  row: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1a1a1a'},
+  search: {
+    marginTop: 16,
+    backgroundColor: '#111',
+    color: '#fff',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
+  },
   icon: {width: 40, height: 40, borderRadius: 8, backgroundColor: '#111'},
   appName: {flex: 1, color: '#fff', fontSize: 16, marginLeft: 14},
+  addButton: {
+    backgroundColor: '#d2fa00',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  addButtonDisabled: {backgroundColor: '#333'},
+  addButtonText: {color: '#000', fontWeight: '700', fontSize: 13},
 });
