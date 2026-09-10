@@ -1,8 +1,12 @@
 {
   "name": "boop-mobile",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "Boop — Launch Mac apps from your Android phone",
   "scripts": {
-    "start": "react-native start"
+    "android": "react-native run-android",
+    "start": "react-native start",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "jest"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",
