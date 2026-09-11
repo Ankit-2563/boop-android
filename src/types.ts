@@ -14,6 +14,5 @@ export interface RemoteApp {
   bundleId: string;
 }
 
-export interface DockItem extends RemoteApp {
-  addedAt: number;
-}
+export type DockItem = RemoteApp;
+
