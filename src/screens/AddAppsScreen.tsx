@@ -47,8 +47,7 @@ export default function AddAppsScreen({
   }, [apps, query]);
 
   const handleAdd = async (app: RemoteApp) => {
-    const item: DockItem = {...app, addedAt: Date.now()};
-    await addDockItem(item);
+    await addDockItem(app);
     setAddedPaths(prev => new Set(prev).add(app.path));
   };
 
