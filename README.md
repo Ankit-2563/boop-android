@@ -23,8 +23,10 @@ You need the companion app running on your Mac:
 
 ## Features
 
-- **Zero Configuration**: Automatically scans and detects your Mac over Bonjour/mDNS on local WiFi.
-- **Secure Pairing**: Protected by a 6-digit rotating token.
+- **Instant QR Code Pairing**: Scan the QR code displayed on your Mac's screen for zero-configuration, one-second pairing.
+- **Manual Wi-Fi Fallback**: Connect by typing the local IP and 6-digit PIN if camera scanning is not preferred.
+- **Optimized & Lightweight**: Built with ABI splits (`arm64-v8a` and `armeabi-v7a`), reducing APK size from 77MB to ~25MB.
+- **Secure Local Auth**: Authenticates all requests via an `X-Dock-Token` header. No third-party servers, internet access, or external telemetry.
 - **Custom App Dock**: Choose which Mac applications appear on your phone's home dock.
 - **Live App Icons**: Displays high-resolution application icons streamed directly from your Mac.
 
@@ -39,13 +41,12 @@ git clone https://github.com/Ankit-2563/boop-android.git
 cd boop-android
 npm install
 
-# Connect your phone via USB with USB Debugging enabled:
+# Run on connected device or emulator:
 npx react-native run-android
 
-# Or build the APK locally:
-cd android
-./gradlew assembleDebug
-# Output APK: android/app/build/outputs/apk/debug/app-debug.apk
+# Build optimized release APK:
+./scripts/build-apk.sh
+# Output: android/app/build/outputs/apk/release/app-arm64-v8a-release.apk
 ```
 
 ---
