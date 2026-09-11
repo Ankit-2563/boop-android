@@ -17,3 +17,4 @@ ios/build/
 *.swp
 coverage/
 dist/
+!android/app/debug.keystore
