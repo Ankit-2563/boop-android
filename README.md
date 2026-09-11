@@ -1,6 +1,5 @@
 # Boop — Android App
 
-[![Release](https://img.shields.io/github/v/release/Ankit-2563/boop-android?color=green&label=Android%20APK)](https://github.com/Ankit-2563/boop-android/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Launch Mac apps directly from your Android phone.**
@@ -9,21 +8,16 @@ Boop turns your Android phone into a remote dock for your Mac. Discover your Mac
 
 ---
 
-## 📱 Quick Download & Install (No PC needed!)
+## 📱 Getting Started
 
-1. On your Android phone, download the latest **[Boop-v0.1.0.apk](https://github.com/Ankit-2563/boop-android/releases/latest/download/Boop-v0.1.0.apk)**.
-2. Tap the downloaded file to install (if prompted, allow "Install unknown apps" from your browser).
-3. Ensure your phone and Mac are connected to the same WiFi.
-4. Launch **Boop** on your phone.
-5. Enter the 6-digit pairing code displayed in the Mac companion's menu bar icon.
-6. Done! Tap any app to launch it on your Mac.
+Downloadable APK builds will be available directly on the official Boop website (coming soon). You can also build and run from source using the steps below.
 
 ---
 
 ## Companion Mac App
 
 You need the companion app running on your Mac:
-- **Download for Mac**: [Boop for macOS](https://github.com/Ankit-2563/boop-mac/releases/latest)
+- **Mac Companion Repository**: [Boop for macOS](https://github.com/Ankit-2563/boop-mac)
 
 ---
 
