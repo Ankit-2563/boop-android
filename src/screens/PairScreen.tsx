@@ -11,10 +11,11 @@ import {
   Platform,
 } from 'react-native';
 import {Camera, CameraType} from 'react-native-camera-kit';
-import {ping} from '../services/api';
+import {ping, pair} from '../services/api';
 import {savePairedMac} from '../services/storage';
 import {MacHost} from '../types';
 import {parseBoopURI} from '../utils/pairing';
+import {getDeviceName} from '../utils/device';
 
 type Mode = 'qr' | 'manual';
 
@@ -56,6 +57,8 @@ export default function PairScreen({onPaired}: {onPaired: () => void}) {
     try {
       const mac: MacHost = {name: 'Mac', host: parsed.host, port: parsed.port};
       const result = await ping(mac);
+      const myDeviceName = getDeviceName();
+      await pair(mac, parsed.token, myDeviceName);
       const deviceName = result.deviceName || 'Mac';
       await savePairedMac({...mac, name: deviceName, token: parsed.token});
       onPaired();
@@ -92,6 +95,8 @@ export default function PairScreen({onPaired}: {onPaired: () => void}) {
     try {
       const mac: MacHost = {name: 'Mac', host, port};
       const result = await ping(mac);
+      const myDeviceName = getDeviceName();
+      await pair(mac, rawCode, myDeviceName);
       const deviceName = result.deviceName || 'Mac';
       await savePairedMac({...mac, name: deviceName, token: rawCode});
       onPaired();
