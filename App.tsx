@@ -48,7 +48,16 @@ export default function App() {
     return <AddAppsScreen mac={mac} onDone={() => setScreen('dock')} />;
   }
 
-  return <DockScreen mac={mac} onAddApps={() => setScreen('addApps')} />;
+  return (
+    <DockScreen
+      mac={mac}
+      onAddApps={() => setScreen('addApps')}
+      onUnpaired={() => {
+        setMac(null);
+        setScreen('pair');
+      }}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
