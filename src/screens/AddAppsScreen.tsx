@@ -55,8 +55,8 @@ export default function AddAppsScreen({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Add Apps</Text>
-        <TouchableOpacity onPress={onDone}>
-          <Text style={styles.doneLink}>Done</Text>
+        <TouchableOpacity style={styles.doneButton} activeOpacity={0.7} onPress={onDone}>
+          <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
 
@@ -65,17 +65,17 @@ export default function AddAppsScreen({
         value={query}
         onChangeText={setQuery}
         placeholder="Search apps..."
-        placeholderTextColor="#666"
+        placeholderTextColor="#666666"
         autoCapitalize="none"
       />
 
       {loading ? (
-        <ActivityIndicator style={{marginTop: 40}} />
+        <ActivityIndicator style={{marginTop: 40}} color="#ffffff" />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={item => item.path}
-          contentContainerStyle={{paddingBottom: 40}}
+          contentContainerStyle={{paddingBottom: 24}}
           renderItem={({item}) => {
             const isAdded = addedPaths.has(item.path);
             return (
@@ -90,8 +90,11 @@ export default function AddAppsScreen({
                 <TouchableOpacity
                   style={[styles.addButton, isAdded && styles.addButtonDisabled]}
                   disabled={isAdded}
+                  activeOpacity={0.7}
                   onPress={() => handleAdd(item)}>
-                  <Text style={styles.addButtonText}>{isAdded ? 'Added' : 'Add'}</Text>
+                  <Text style={[styles.addButtonText, isAdded && styles.addButtonTextDisabled]}>
+                    {isAdded ? 'Added' : '+ Add'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             );
@@ -103,33 +106,84 @@ export default function AddAppsScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#000', padding: 24, paddingTop: 60},
-  header: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
-  title: {color: '#fff', fontSize: 24, fontWeight: '700'},
-  doneLink: {color: '#d2fa00', fontSize: 16, fontWeight: '600'},
-  search: {
-    marginTop: 16,
-    backgroundColor: '#111',
-    color: '#fff',
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+    paddingHorizontal: 24,
+    paddingTop: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 40,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  doneButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  doneButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  search: {
+    marginTop: 10,
+    marginBottom: 8,
+    backgroundColor: '#141416',
+    color: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    fontSize: 14,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
-  icon: {width: 40, height: 40, borderRadius: 8, backgroundColor: '#111'},
-  appName: {flex: 1, color: '#fff', fontSize: 16, marginLeft: 14},
+  icon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#161618',
+  },
+  appName: {
+    flex: 1,
+    color: '#f5f5f7',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 12,
+  },
   addButton: {
-    backgroundColor: '#d2fa00',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 6,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
-  addButtonDisabled: {backgroundColor: '#333'},
-  addButtonText: {color: '#000', fontWeight: '700', fontSize: 13},
+  addButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  addButtonText: {
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  addButtonTextDisabled: {
+    color: '#636366',
+  },
 });

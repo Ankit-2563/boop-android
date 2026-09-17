@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
   Platform,
+  ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import {Camera, CameraType} from 'react-native-camera-kit';
 import {ping, pair} from '../services/api';
@@ -27,6 +29,8 @@ export default function PairScreen({onPaired}: {onPaired: () => void}) {
   // Manual pairing state
   const [manualHost, setManualHost] = useState('');
   const [code, setCode] = useState('');
+
+  const {width, height} = useWindowDimensions();
 
   useEffect(() => {
     if (mode === 'qr') {
@@ -63,30 +67,32 @@ export default function PairScreen({onPaired}: {onPaired: () => void}) {
       await savePairedMac({...mac, name: deviceName, token: parsed.token});
       onPaired();
     } catch (e: any) {
-      Alert.alert('Could not connect', e.message ?? 'Unknown error');
+      Alert.alert('Connection failed', e.message ?? 'Could not pair with Mac.');
+    } finally {
       setConnecting(false);
     }
   };
 
   const confirmManualPair = async () => {
-    const rawHost = manualHost.trim();
+    const trimmedHost = manualHost.trim();
     const rawCode = code.trim();
-    if (!rawHost) {
-      Alert.alert('Please enter your Mac’s IP address');
+
+    if (!trimmedHost) {
+      Alert.alert('IP required', 'Enter the IP address shown on your Mac.');
       return;
     }
     if (rawCode.length !== 6) {
-      Alert.alert('Enter the 6-digit code shown on your Mac');
+      Alert.alert('Invalid code', 'Enter the 6-digit code shown on your Mac.');
       return;
     }
 
-    let host = rawHost;
+    let host = trimmedHost;
     let port = 8492;
-    if (rawHost.includes(':')) {
-      const parts = rawHost.split(':');
-      host = parts[0];
-      const parsedPort = parseInt(parts[1], 10);
-      if (!isNaN(parsedPort) && parsedPort > 0) {
+    if (trimmedHost.includes(':')) {
+      const [h, p] = trimmedHost.split(':');
+      host = h;
+      const parsedPort = parseInt(p, 10);
+      if (!isNaN(parsedPort)) {
         port = parsedPort;
       }
     }
@@ -110,152 +116,254 @@ export default function PairScreen({onPaired}: {onPaired: () => void}) {
     }
   };
 
+  const isLandscape = width > height;
+  const scannerSize = Math.min(height - 48, 280);
+
   // ── QR Scanner View ──
   if (mode === 'qr') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Scan QR Code</Text>
-        <Text style={styles.subtitle}>
-          Open Boop on your Mac and click "Show QR Code" in the menu bar.
-        </Text>
+        <View style={isLandscape ? styles.landscapeRow : styles.portraitCol}>
+          <View style={isLandscape ? styles.landscapeInfo : styles.portraitInfo}>
+            <Text style={styles.title}>Scan QR Code</Text>
+            <Text style={styles.subtitle}>
+              Open Boop on your Mac and click "Show QR Code" in the menu bar.
+            </Text>
 
-        {connecting ? (
-          <View style={styles.scannerPlaceholder}>
-            <ActivityIndicator color="#d2fa00" size="large" />
-            <Text style={styles.connectingText}>Connecting…</Text>
+            <TouchableOpacity
+              style={styles.switchButton}
+              activeOpacity={0.7}
+              onPress={() => setMode('manual')}>
+              <Text style={styles.switchButtonText}>Connect manually instead</Text>
+            </TouchableOpacity>
           </View>
-        ) : cameraReady ? (
-          <View style={styles.scannerContainer}>
-            <Camera
-              style={styles.scanner}
-              cameraType={CameraType.Back}
-              scanBarcode={true}
-              onReadCode={handleQRRead}
-              showFrame={true}
-              laserColor="#d2fa00"
-              frameColor="#d2fa00"
-            />
-          </View>
-        ) : (
-          <View style={styles.scannerPlaceholder}>
-            <ActivityIndicator color="#fff" />
-          </View>
-        )}
 
-        <TouchableOpacity onPress={() => setMode('manual')}>
-          <Text style={styles.backLink}>Connect manually instead</Text>
-        </TouchableOpacity>
+          <View style={[styles.scannerWrapper, {width: scannerSize, height: scannerSize}]}>
+            {connecting ? (
+              <View style={styles.scannerPlaceholder}>
+                <ActivityIndicator color="#ffffff" size="large" />
+                <Text style={styles.connectingText}>Connecting…</Text>
+              </View>
+            ) : cameraReady ? (
+              <View style={styles.scannerContainer}>
+                <Camera
+                  style={styles.scanner}
+                  cameraType={CameraType.Back}
+                  scanBarcode={true}
+                  onReadCode={handleQRRead}
+                  showFrame={true}
+                  laserColor="#ffffff"
+                  frameColor="#ffffff"
+                />
+              </View>
+            ) : (
+              <View style={styles.scannerPlaceholder}>
+                <ActivityIndicator color="#ffffff" />
+              </View>
+            )}
+          </View>
+        </View>
       </View>
     );
   }
 
   // ── Manual: IP + code entry ──
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Connect Manually</Text>
-      <Text style={styles.subtitle}>
-        Enter the IP address and 6-digit code shown on your Mac.
-      </Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.manualScroll}>
+      <View style={styles.manualCard}>
+        <Text style={styles.title}>Connect Manually</Text>
+        <Text style={styles.subtitle}>
+          Enter the IP address and 6-digit code shown on your Mac.
+        </Text>
 
-      <Text style={styles.fieldLabel}>Mac IP Address</Text>
-      <TextInput
-        style={styles.textInput}
-        value={manualHost}
-        onChangeText={setManualHost}
-        placeholder="192.168.1.x or 192.168.1.x:8492"
-        placeholderTextColor="#666"
-        autoCapitalize="none"
-        autoCorrect={false}
-        keyboardType="numeric"
-      />
+        <View style={styles.inputRow}>
+          <View style={{flex: 2}}>
+            <Text style={styles.fieldLabel}>Mac IP Address</Text>
+            <TextInput
+              style={styles.textInput}
+              value={manualHost}
+              onChangeText={setManualHost}
+              placeholder="192.168.1.x or 192.168.1.x:8492"
+              placeholderTextColor="#555555"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="numeric"
+            />
+          </View>
 
-      <Text style={styles.fieldLabel}>Pairing Code</Text>
-      <TextInput
-        style={styles.codeInput}
-        value={code}
-        onChangeText={setCode}
-        keyboardType="number-pad"
-        maxLength={6}
-        placeholder="000000"
-        placeholderTextColor="#666"
-      />
+          <View style={{flex: 1, marginLeft: 16}}>
+            <Text style={styles.fieldLabel}>Pairing Code</Text>
+            <TextInput
+              style={styles.codeInput}
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              placeholder="000000"
+              placeholderTextColor="#555555"
+            />
+          </View>
+        </View>
 
-      {connecting ? (
-        <ActivityIndicator style={{marginTop: 32}} color="#d2fa00" size="large" />
-      ) : (
-        <TouchableOpacity style={styles.primaryButton} onPress={confirmManualPair}>
-          <Text style={styles.primaryButtonText}>Connect</Text>
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity onPress={() => setMode('qr')}>
-        <Text style={styles.backLink}>← Scan QR code instead</Text>
-      </TouchableOpacity>
-    </View>
+        {connecting ? (
+          <ActivityIndicator style={{marginTop: 20}} color="#ffffff" size="small" />
+        ) : (
+          <View style={styles.manualActions}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              activeOpacity={0.7}
+              onPress={confirmManualPair}>
+              <Text style={styles.primaryButtonText}>Connect</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.switchButton}
+              activeOpacity={0.7}
+              onPress={() => setMode('qr')}>
+              <Text style={styles.switchButtonText}>← Scan QR code instead</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#000', padding: 24, paddingTop: 60},
-  title: {color: '#fff', fontSize: 24, fontWeight: '700'},
-  subtitle: {color: '#999', fontSize: 14, marginTop: 8, marginBottom: 16},
-  scannerContainer: {
-    marginTop: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  landscapeRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  portraitCol: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  landscapeInfo: {
+    flex: 1,
+    paddingRight: 32,
+    justifyContent: 'center',
+  },
+  portraitInfo: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    color: '#8e8e93',
+    fontSize: 13,
+    marginTop: 6,
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  scannerWrapper: {
     borderRadius: 16,
     overflow: 'hidden',
-    aspectRatio: 1,
-    width: '100%',
+    backgroundColor: '#111113',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  scannerContainer: {
+    flex: 1,
   },
   scanner: {
     flex: 1,
   },
   scannerPlaceholder: {
-    marginTop: 24,
-    aspectRatio: 1,
-    width: '100%',
-    backgroundColor: '#111',
-    borderRadius: 16,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  connectingText: {color: '#d2fa00', marginTop: 12, fontSize: 16, fontWeight: '600'},
-  fieldLabel: {
-    color: '#aaa',
-    fontSize: 13,
+  connectingText: {
+    color: '#ffffff',
+    marginTop: 12,
+    fontSize: 14,
     fontWeight: '600',
-    marginTop: 20,
-    marginBottom: 8,
+  },
+  switchButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  switchButtonText: {
+    color: '#f5f5f7',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  manualScroll: {
+    paddingVertical: 10,
+    justifyContent: 'center',
+  },
+  manualCard: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  fieldLabel: {
+    color: '#8e8e93',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   textInput: {
-    backgroundColor: '#161616',
+    backgroundColor: '#141416',
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#fff',
-    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    color: '#ffffff',
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   codeInput: {
-    backgroundColor: '#161616',
+    backgroundColor: '#141416',
     borderRadius: 8,
-    color: '#fff',
-    fontSize: 28,
-    letterSpacing: 8,
-    paddingVertical: 10,
+    color: '#ffffff',
+    fontSize: 20,
+    letterSpacing: 4,
+    paddingVertical: 7,
     textAlign: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  manualActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 20,
   },
   primaryButton: {
-    marginTop: 32,
-    backgroundColor: '#d2fa00',
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    paddingVertical: 9,
+    paddingHorizontal: 22,
+    borderRadius: 16,
     alignItems: 'center',
   },
-  primaryButtonText: {color: '#000', fontWeight: '700', fontSize: 16},
-  backLink: {color: '#666', textAlign: 'center', marginTop: 24, paddingVertical: 10},
+  primaryButtonText: {
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 13,
+  },
 });
